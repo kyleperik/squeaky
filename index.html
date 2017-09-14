@@ -1,0 +1,25 @@
+<html>
+    <head>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.29.0/codemirror.js"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.29.0/codemirror.css">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.29.0/mode/python/python.js"></script>
+        <script>
+            function init() {
+                window.codeMirror = CodeMirror(document.body, {
+                    value: `def hi():\n  print('Yay <3 <3 <3')`,
+                    mode: 'python'
+                });
+
+                console.log(window.codeMirror.getValue());
+
+                window.codeMirror.on('change', function (e) {
+                    console.log(e.getValue());
+                });
+            }
+
+            window.addEventListener('load', init);
+        </script>
+    </head>
+    <body>
+    </body>
+</html>

@@ -20,16 +20,35 @@ def index():
 @sio.on('connect', namespace='/')
 def connect(sid, environ):
     sio.emit('code', db.get('code').decode(), room=sid)
+    print('connect', sid)
+
+def transform(lines, changes):
+    '''make changes to lines of text'''
+    if len(changes) == 0: return lines
+    change = changes[0]
+    before = str.join('\n',
+        lines[:change['from']['line']]
+        + [lines[change['from']['line']][:change['from']['ch']]]
+    )
+    replaced = str.join('\n', change['text'])
+    after = str.join('\n',
+        [lines[change['to']['line']][change['to']['ch']:]]
+        + lines[change['to']['line'] + 1:]
+    )
+    result = str.join('', [before, replaced, after])
+    return transform(str.split(result, '\n'), changes[1:])
 
 @sio.on('code change', namespace='/')
 def code(sid, environ):
-    db.set('code', environ['data'])
-    sio.emit('code', db.get('code').decode(), skip_sid=sid)
-    print('code_change', sid)
+    changes = environ['changes']
+    lines = str.split(db.get('code').decode(), '\n')
+    result = str.join('\n', transform(lines, changes))
+    db.set('code', result)
+    sio.emit('code change', changes, skip_sid=sid)
+    print('code change', sid)
 
 @sio.on('disconnect', namespace='/')
 def disconnect(sid):
-    print('bubbles')
     print('disconnect', sid)
 
 @werkzeug.serving.run_with_reloader

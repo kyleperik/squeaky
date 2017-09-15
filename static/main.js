@@ -1,19 +1,28 @@
+var manualChangeMade = false;
 
-function set_code(code) {
-    if (code !== window.codeMirror.getValue()) {
-        window.codeMirror.setValue(code);
-    }
+function change_code(changeObj) {
+    window.codeMirror.replaceRange(
+        changeObj.text.join('\n'),
+        changeObj.from,
+        changeObj.to
+    );
 }
 
 function init_socket_io() {
     var socket = io.connect('/');
 
     socket.on('connect', function() {
-        console.log('connected!')
+        console.log('connected!');
     });
 
     socket.on('code', function (code) {
-        set_code(code);
+        manualChangeMade = true;
+        window.codeMirror.setValue(code);
+    });
+
+    socket.on('code change', function (changes) {
+        manualChangeMade = true;
+        window.codeMirror.operation(() => changes.forEach(change_code));
     });
 
     return socket;
@@ -26,12 +35,27 @@ function init() {
 
     window.socket = init_socket_io();
 
-    window.codeMirror.on('change', function (e) {
+    var pendingChanges = [];
+    var changeTimeout = null;
+
+    function makeChanges () {
         window.socket.emit('code change', {
-            data: e.getValue()
+            changes: pendingChanges
         });
+        pendingChanges = [];
+    }
+
+    window.codeMirror.on('changes', function (e, changes) {
+        if (manualChangeMade) {
+            manualChangeMade = false;
+            return;
+        }
+
+        pendingChanges = pendingChanges.concat(changes);
+        
+        clearTimeout(changeTimeout);
+        changeTimeout = setTimeout(makeChanges, 100);
     });
-    console.log(window.socket);
 }
 
 window.addEventListener('load', init);

@@ -1,5 +1,4 @@
 from livecode import models
-from livecode import data
 
 def transform_change(change, change_modifier):
     return models.Change(

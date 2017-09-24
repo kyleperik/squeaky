@@ -3,7 +3,9 @@ import eventlet
 import eventlet.wsgi
 import werkzeug.serving
 
-import redis
+from livecode import data
+from livecode import services
+from livecode import models
 
 from flask import Flask, render_template
 
@@ -11,39 +13,29 @@ sio = socketio.Server()
 app = Flask(__name__)
 app.debug = True
 
-db = redis.StrictRedis(host="localhost", port=6379, db=0)
-
 @app.route('/')
 def index():
     return render_template('index.html')
 
 @sio.on('connect', namespace='/')
 def connect(sid, environ):
-    sio.emit('code', db.get('code').decode(), room=sid)
+    sio.emit('code', data.get_code(), room=sid)
     print('connect', sid)
 
-def transform(lines, changes):
-    '''make changes to lines of text'''
-    if len(changes) == 0: return lines
-    change = changes[0]
-    before = str.join('\n',
-        lines[:change['from']['line']]
-        + [lines[change['from']['line']][:change['from']['ch']]]
-    )
-    replaced = str.join('\n', change['text'])
-    after = str.join('\n',
-        [lines[change['to']['line']][change['to']['ch']:]]
-        + lines[change['to']['line'] + 1:]
-    )
-    result = str.join('', [before, replaced, after])
-    return transform(str.split(result, '\n'), changes[1:])
-
 @sio.on('code change', namespace='/')
-def code(sid, environ):
-    changes = environ['changes']
-    lines = str.split(db.get('code').decode(), '\n')
-    result = str.join('\n', transform(lines, changes))
-    db.set('code', result)
+def code_change(sid, environ):
+    last_changeid = environ['last_changeid']
+    changes = [
+        models.Change(
+            line_from = change['from']['line'],
+            char_from = change['from']['ch'],
+            line_to = change['to']['line'],
+            char_to = change['to']['ch'],
+            text = change['text'],
+        )
+    for change in environ['changes']]
+    result = services.transform(data.get_code(), changes)
+    data.set_code(result)
     sio.emit('code change', changes, skip_sid=sid)
     print('code change', sid)
 

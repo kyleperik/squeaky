@@ -20,24 +20,39 @@ def index():
 @sio.on('connect', namespace='/')
 def connect(sid, environ):
     sio.emit('code', data.get_code(), room=sid)
+    sio.emit('last changeid', data.get_changeid(), room=sid)
     print('connect', sid)
 
 @sio.on('code change', namespace='/')
 def code_change(sid, environ):
-    last_changeid = environ['last_changeid']
+    last_changeids = [
+        change['last_changeid']
+    for change in environ['changes']]
     changes = [
         models.Change(
-            line_from = change['from']['line'],
-            char_from = change['from']['ch'],
-            line_to = change['to']['line'],
-            char_to = change['to']['ch'],
-            text = change['text'],
+            from_pos = models.Position(
+                change['from']['line'],
+                change['from']['ch'],
+            ),
+            to_pos = models.Position(
+                change['to']['line'],
+                change['to']['ch'],
+            ),
+            text = str.join('\n', change['text']),
         )
     for change in environ['changes']]
-    result = services.transform(data.get_code(), changes)
-    data.set_code(result)
-    sio.emit('code change', changes, skip_sid=sid)
-    print('code change', sid)
+    new_code = services.transform(data.get_code(), changes)
+    data.set_code(new_code)
+    current_changeid = data.get_changeid()
+    new_changes = [
+        services.apply_change(c[0], c[1], current_changeid)
+    for c in zip(changes, last_changeids)]
+    print(new_changes)
+    sio.emit('last changeid', data.get_changeid(), room=sid)
+    result_changes = [
+        c.serialize()
+    for c in new_changes]
+    sio.emit('code change', result_changes, skip_sid=sid)
 
 @sio.on('disconnect', namespace='/')
 def disconnect(sid):

@@ -6,7 +6,7 @@ def test_modify_sameline_after():
         to_pos = models.Position(0, 4),
         text = 'a',
     )
-
+    
     pos = models.Position(0, 4)
     
     result = change.modify(pos)
@@ -85,7 +85,7 @@ def test_modify_multiplelines_after_lineof():
     result = change.modify(pos)
 
     assert result.line == 2
-    assert result.char == 4
+    assert result.char == 6
 
 def test_modify_multiplelines_after():
     change = models.Change(

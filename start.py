@@ -3,9 +3,9 @@ import eventlet
 import eventlet.wsgi
 import werkzeug.serving
 
-from livecode import data
-from livecode import services
-from livecode import models
+from squeaky import data
+from squeaky import services
+from squeaky import models
 
 from flask import Flask, render_template
 

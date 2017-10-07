@@ -1,4 +1,4 @@
-from livecode import models
+from squeaky import models
 import redis
 import json
 

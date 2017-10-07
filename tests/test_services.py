@@ -1,4 +1,4 @@
-from livecode import services, models
+from squeaky import services, models
 
 def test_transform():
     code = '''line one

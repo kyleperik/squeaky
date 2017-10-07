@@ -1,4 +1,4 @@
-from livecode import models, data
+from squeaky import models, data
 
 def apply_changes(changes, last_changeids):
     if len(last_changeids) == 0: return []

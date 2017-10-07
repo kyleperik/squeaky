@@ -1,9 +1,9 @@
 from setuptools import setup
 
 setup(
-    name='livecode',
+    name='squeaky',
     long_description=__doc__,
-    packages=['livecode'],
+    packages=['squeaky'],
     include_package_data=True,
     zip_safe=False,
     install_requires=[

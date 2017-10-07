@@ -1,4 +1,4 @@
-from livecode import models
+from squeaky import models
 
 def test_modify_sameline_after():
     change = models.Change(
